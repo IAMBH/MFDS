@@ -1,0 +1,5 @@
+- 실시간 영상 
+python detect.py --weights weights/1st/epoch_000.pt --source rtsp://admin:torch439@@192.168.0.231:554/trackID=1
+
+- test 이미지 input 
+python detect.py --weights weights/1st/epoch_000.pt --source test/
