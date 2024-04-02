@@ -6,21 +6,18 @@ from PIL import ImageOps
 from PIL import Image
 import cv2 as cv
 import os
-import getBaseDir
-import os, sys
+import os
 import argparse
 
+from decouple import config
 import pymssql
 from datetime import datetime
 
-server = '20.200.213.94'
-username = 'sa'
-password = 'Retailtech1@#$'
-database = 'SharedKitchen'
+SERVER = config('SERVER')
+USERNAME = config('USERNAME')
+PASSWORD = config('PASSWORD')
+DATABASE = config('DATABASE')
 
-
-# from models.sign_verification.model import SigNet
-# from models.sign_verification.inference import Signature
 from model import SigNet
 
 class Signature(object):
@@ -90,31 +87,24 @@ def get_args_parse():
 if __name__ == "__main__":
     args = get_args_parse().parse_args()
     
-    # ROOT = "./models/sign_verification/ckpt" # 누나가 쓸 때 이거쓰세용
     ROOT = "./ckpt" # exe파일 돌리기위한 ROOT
 
-    # img1 = './models/sign_verification/cedar.png' # 누나가 쓸 때 이거쓰세용
-    # img2 = './models/sign_verification/cedar2.png' # 누나가 쓸 때 이거쓰세용
-    # img1 = './cedar.png'
-    # img2 = './cedar2.png'
     img1 = args.origin
     img2 = args.login
 
-
     verifier = Signature(root=ROOT)
     model = verifier.model_setup()
-    origin = verifier.inference(model, img1, img2)  # 진짜이면 rue, 위조이면 False return
+    origin = verifier.inference(model, img1, img2)  # 진짜이면 True, 위조이면 False return
     
     # DB 접근
-    conn = pymssql.connect(server, username, password, database)
+    conn = pymssql.connect(SERVER, USERNAME, PASSWORD, DATABASE)    
     cur = conn.cursor()
     if origin:
         cur.execute('INSERT INTO T_SIGN (SIGN_TF, SIGN_DT, KITCHEN_CD, ROOM_NO, USER_ID) VALUES(%s, %s, %s, %s, %s)', ('TRUE', datetime.today(), '1000', '101', 'USER0'))
         conn.commit()
-        print('입실 체크리스트')
     else:
-        cur.execute('INSERT INTO T_SIGN (SIGN_TF, SIGN_DT, KITCHEN_CD, ROOM_NO, USER_ID) VALUES(%s, %s)', ('FALSE', datetime.today(), '1000', '101', 'USER0'))
+        cur.execute('INSERT INTO T_SIGN (SIGN_TF, SIGN_DT, KITCHEN_CD, ROOM_NO, USER_ID) VALUES(%s, %s, %s, %s, %s)', ('FALSE', datetime.today(), '1000', '101', 'USER0'))
         conn.commit()
-        print('위조입니당')
+        # print('위조입니당')
         
     conn.close()
